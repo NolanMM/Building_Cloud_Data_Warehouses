@@ -1,0 +1,9 @@
+SELECT TOP 10 sta.[station_id],
+    sta.[name] AS station_name,
+    COUNT(FT.[trip_id]) AS trip_count,
+    SUM(TRY_CAST(p.[amount] AS FLOAT)) AS Revenue
+FROM [dbo].[dimensional_station] sta
+JOIN [dbo].[Fact_Trip_Table] FT ON sta.[station_id] = FT.[end_station_id]
+JOIN [dbo].[dimensional_payment] p ON FT.[trip_id] = p.[trip_id]
+GROUP BY sta.[station_id], sta.[name]
+ORDER BY Revenue DESC;

@@ -1,0 +1,5 @@
+SELECT TOP (100) [payment_id]
+,[date]
+,[amount]
+,[rider_id]
+ FROM [dbo].[staging_payment]

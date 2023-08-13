@@ -1,0 +1,45 @@
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat') 
+	CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat] 
+	WITH ( FORMAT_TYPE = DELIMITEDTEXT ,
+	       FORMAT_OPTIONS (
+			 FIELD_TERMINATOR = ',',
+			 USE_TYPE_DEFAULT = FALSE
+			))
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'datalakeudacityproject_datalakeudacityproject_dfs_core_windows_net') 
+	CREATE EXTERNAL DATA SOURCE [datalakeudacityproject_datalakeudacityproject_dfs_core_windows_net] 
+	WITH (
+		LOCATION = 'abfss://datalakeudacityproject@datalakeudacityproject.dfs.core.windows.net' 
+	)
+GO
+
+IF OBJECT_ID('dbo.dimensional_date_payment_final') IS NOT NULL
+BEGIN
+    DROP EXTERNAL TABLE [dbo].[dimensional_date_payment_final];
+END
+
+CREATE EXTERNAL TABLE dbo.dimensional_date_payment_final
+WITH (
+    LOCATION = 'dimensional_date_payment_final',
+    DATA_SOURCE = [datalakeudacityproject_datalakeudacityproject_dfs_core_windows_net],
+    FILE_FORMAT = [SynapseDelimitedTextFormat]
+)
+AS
+SELECT
+    YEAR(TRY_CAST(date AS DATETIME2)) AS year,
+	DATEPART(QUARTER,TRY_CAST(date AS DATETIME2)) AS quarter,
+	MONTH(TRY_CAST(date AS DATETIME2)) AS month,
+	DAY(TRY_CAST(date AS DATETIME2)) AS day,
+	DATEPART(WEEK,TRY_CAST(date AS DATETIME2)) AS week,
+	DATEPART(WEEKDAY, TRY_CAST(date AS DATETIME2)) AS day_of_week,
+	CASE
+		WHEN
+			DATEPART(WEEKDAY,TRY_CAST(date AS DATETIME2)) IN (6,7) THEN 1
+			else 0
+	END AS is_weekend
+FROM [dbo].[staging_payment];
+GO
+
+SELECT TOP 100 * FROM dbo.dimensional_date_payment_final
+GO

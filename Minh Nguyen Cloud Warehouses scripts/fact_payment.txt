@@ -1,0 +1,35 @@
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat') 
+	CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat] 
+	WITH ( FORMAT_TYPE = DELIMITEDTEXT ,
+	       FORMAT_OPTIONS (
+			 FIELD_TERMINATOR = ',',
+			 USE_TYPE_DEFAULT = FALSE
+			))
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'datalakeudacityproject_datalakeudacityproject_dfs_core_windows_net') 
+	CREATE EXTERNAL DATA SOURCE [datalakeudacityproject_datalakeudacityproject_dfs_core_windows_net] 
+	WITH (
+		LOCATION = 'abfss://datalakeudacityproject@datalakeudacityproject.dfs.core.windows.net' 
+	)
+GO
+
+IF OBJECT_ID('dbo.fact_payment_final') IS NOT NULL
+BEGIN 
+	DROP EXTERNAL TABLE [dbo].[fact_payment_final]; 
+END
+
+CREATE EXTERNAL TABLE dbo.fact_payment_final
+WITH (
+    LOCATION     = 'fact_payment_final',
+    DATA_SOURCE = [datalakeudacityproject_datalakeudacityproject_dfs_core_windows_net],
+    FILE_FORMAT = [SynapseDelimitedTextFormat]
+)  
+AS
+SELECT [payment_id], [amount], [date], [rider_id]
+FROM [dbo].[staging_payment];
+GO
+
+
+SELECT TOP 100 * FROM dbo.fact_payment_final
+GO

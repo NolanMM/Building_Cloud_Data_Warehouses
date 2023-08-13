@@ -1,0 +1,8 @@
+SELECT TOP (100) [year]
+,[quarter]
+,[month]
+,[day]
+,[week]
+,[day_of_week]
+,[is_weekend]
+ FROM [dbo].[dimensional_date_payment_final]

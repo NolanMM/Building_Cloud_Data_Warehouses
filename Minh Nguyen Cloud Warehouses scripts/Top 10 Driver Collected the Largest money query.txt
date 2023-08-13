@@ -1,0 +1,8 @@
+SELECT TOP 10 ri.[rider_id],
+    ri.[first] AS first_name,
+    ri.[last] AS last_name,
+    SUM(TRY_CAST(p.[amount] AS FLOAT)) AS collected
+FROM [dbo].[dimensional_rider] ri
+JOIN [dbo].[dimensional_payment] p ON ri.[rider_id] = p.[rider_id]
+GROUP BY ri.[rider_id], ri.[first], ri.[last]
+ORDER BY collected DESC;

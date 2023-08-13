@@ -1,0 +1,42 @@
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat') 
+	CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat] 
+	WITH ( FORMAT_TYPE = DELIMITEDTEXT ,
+	       FORMAT_OPTIONS (
+			 FIELD_TERMINATOR = ',',
+			 USE_TYPE_DEFAULT = FALSE
+			))
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'datalakeudacityproject_datalakeudacityproject_dfs_core_windows_net') 
+	CREATE EXTERNAL DATA SOURCE [datalakeudacityproject_datalakeudacityproject_dfs_core_windows_net] 
+	WITH (
+		LOCATION = 'abfss://datalakeudacityproject@datalakeudacityproject.dfs.core.windows.net' 
+	)
+GO
+
+IF OBJECT_ID('dbo.Fact_Trip_Table') IS NOT NULL
+BEGIN 
+	DROP EXTERNAL TABLE [dbo].[Fact_Trip_Table]; 
+END
+
+CREATE EXTERNAL TABLE dbo.Fact_Trip_Table
+WITH (
+    LOCATION     = 'Fact_Trip_Table',
+    DATA_SOURCE = [datalakeudacityproject_datalakeudacityproject_dfs_core_windows_net],
+    FILE_FORMAT = [SynapseDelimitedTextFormat]
+)  
+AS
+SELECT
+ [trip_id],
+ [rideable_type],
+ [start_at],
+ [ended_at],
+ [start_station_id],
+ [end_station_id],
+ TRY_CAST(ended_at AS DATE) AS date,
+ [rider_id]
+FROM [dbo].[staging_trip];
+GO
+
+SELECT TOP 100 * FROM dbo.Fact_Trip_Table
+GO

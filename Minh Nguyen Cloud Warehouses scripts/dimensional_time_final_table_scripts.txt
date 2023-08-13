@@ -1,0 +1,40 @@
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat') 
+	CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat] 
+	WITH ( FORMAT_TYPE = DELIMITEDTEXT ,
+	       FORMAT_OPTIONS (
+			 FIELD_TERMINATOR = ',',
+			 USE_TYPE_DEFAULT = FALSE
+			))
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'datalakeudacityproject_datalakeudacityproject_dfs_core_windows_net') 
+	CREATE EXTERNAL DATA SOURCE [datalakeudacityproject_datalakeudacityproject_dfs_core_windows_net] 
+	WITH (
+		LOCATION = 'abfss://datalakeudacityproject@datalakeudacityproject.dfs.core.windows.net' 
+	)
+GO
+
+IF OBJECT_ID('dbo.dimensional_time_final') IS NOT NULL
+BEGIN
+    DROP EXTERNAL TABLE [dbo].[dimensional_time_final];
+END
+
+CREATE EXTERNAL TABLE dbo.dimensional_time_final
+WITH (
+    LOCATION = 'dimensional_time_final',
+    DATA_SOURCE = [datalakeudacityproject_datalakeudacityproject_dfs_core_windows_net],
+    FILE_FORMAT = [SynapseDelimitedTextFormat]
+)
+AS
+SELECT
+    CAST(SUBSTRING(start_at, 12, 2) AS INT) AS start_hour,
+    CAST(SUBSTRING(start_at, 15, 2) AS INT) AS start_minute,
+    CAST(SUBSTRING(start_at, 18, 2) AS INT) AS start_second,
+    CAST(SUBSTRING(ended_at, 12, 2) AS INT) AS end_hour,
+    CAST(SUBSTRING(ended_at, 15, 2) AS INT) AS end_minute,
+    CAST(SUBSTRING(ended_at, 18, 2) AS INT) AS end_second
+FROM [dbo].[staging_trip];
+GO
+
+SELECT TOP 100 * FROM dbo.dimensional_time_final
+GO

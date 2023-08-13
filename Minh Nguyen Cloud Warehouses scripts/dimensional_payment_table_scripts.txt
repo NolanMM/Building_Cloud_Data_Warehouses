@@ -1,0 +1,42 @@
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat') 
+	CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat] 
+	WITH ( FORMAT_TYPE = DELIMITEDTEXT ,
+	       FORMAT_OPTIONS (
+			 FIELD_TERMINATOR = ',',
+			 USE_TYPE_DEFAULT = FALSE
+			))
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'datalakeudacityproject_datalakeudacityproject_dfs_core_windows_net') 
+	CREATE EXTERNAL DATA SOURCE [datalakeudacityproject_datalakeudacityproject_dfs_core_windows_net] 
+	WITH (
+		LOCATION = 'abfss://datalakeudacityproject@datalakeudacityproject.dfs.core.windows.net' 
+	)
+GO
+
+IF OBJECT_ID('dbo.dimensional_payment') IS NOT NULL
+BEGIN 
+	DROP EXTERNAL TABLE [dbo].[dimensional_payment]; 
+END
+
+CREATE EXTERNAL TABLE dbo.dimensional_payment
+WITH (
+    LOCATION     = 'dimensional_payment',
+    DATA_SOURCE = [datalakeudacityproject_datalakeudacityproject_dfs_core_windows_net],
+    FILE_FORMAT = [SynapseDelimitedTextFormat]
+)  
+AS
+SELECT
+    spf.[payment_id],
+    TRY_CAST(spf.[date] AS DATE) AS [date],
+    spf.[amount],
+    FT.[trip_id],
+    spf.[rider_id]
+FROM [dbo].[staging_payment_final] spf
+JOIN [dbo].[Fact_Trip_Table] FT
+    ON TRY_CAST(spf.[date] AS DATE) = FT.[date]
+    AND spf.[rider_id] = FT.[rider_id];
+GO
+
+SELECT TOP 100 * FROM dbo.dimensional_payment
+GO

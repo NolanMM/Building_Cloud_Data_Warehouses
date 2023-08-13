@@ -1,0 +1,5 @@
+SELECT TOP (100) [station_id]
+,[name]
+,[latitude]
+,[longtitude]
+ FROM [dbo].[dimensional_station]

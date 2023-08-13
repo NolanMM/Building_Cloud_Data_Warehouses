@@ -1,0 +1,6 @@
+SELECT TOP (100) [payment_id]
+,[date]
+,[amount]
+,[trip_id]
+,[rider_id]
+ FROM [dbo].[dimensional_payment]

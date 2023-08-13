@@ -1,0 +1,50 @@
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat') 
+	CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat] 
+	WITH ( FORMAT_TYPE = DELIMITEDTEXT ,
+	       FORMAT_OPTIONS (
+			 FIELD_TERMINATOR = ',',
+			 USE_TYPE_DEFAULT = FALSE
+			))
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'datalakeudacityproject_datalakeudacityproject_dfs_core_windows_net') 
+	CREATE EXTERNAL DATA SOURCE [datalakeudacityproject_datalakeudacityproject_dfs_core_windows_net] 
+	WITH (
+		LOCATION = 'abfss://datalakeudacityproject@datalakeudacityproject.dfs.core.windows.net' 
+	)
+GO
+
+IF OBJECT_ID('dbo.dimensional_date_trip') IS NOT NULL
+BEGIN
+    DROP EXTERNAL TABLE [dbo].[dimensional_date_trip];
+END
+
+CREATE EXTERNAL TABLE dbo.dimensional_date_trip
+WITH (
+    LOCATION = 'dimensional_date_trip',
+    DATA_SOURCE = [datalakeudacityproject_datalakeudacityproject_dfs_core_windows_net],
+    FILE_FORMAT = [SynapseDelimitedTextFormat]
+)
+AS
+SELECT
+    FT.[trip_id],
+    spf.[date],
+    YEAR(TRY_CAST(spf.[date] AS DATETIME2)) AS year,
+	DATEPART(QUARTER,TRY_CAST(spf.[date] AS DATETIME2)) AS quarter,
+	MONTH(TRY_CAST(spf.[date] AS DATETIME2)) AS month,
+	DAY(TRY_CAST(spf.[date] AS DATETIME2)) AS day,
+	DATEPART(WEEK,TRY_CAST(spf.[date] AS DATETIME2)) AS week,
+	DATEPART(WEEKDAY, TRY_CAST(spf.[date] AS DATETIME2)) AS day_of_week,
+	CASE
+		WHEN
+			DATEPART(WEEKDAY,TRY_CAST(spf.[date] AS DATETIME2)) IN (6,7) THEN 1
+			else 0
+	END AS is_weekend
+FROM [dbo].[staging_payment_final] spf
+JOIN [dbo].[Fact_Trip_Table] FT
+    ON TRY_CAST(spf.[date] AS DATE) = FT.[date]
+    AND spf.[rider_id] = FT.[rider_id];
+GO
+
+SELECT TOP 100 * FROM dbo.dimensional_date_trip
+GO

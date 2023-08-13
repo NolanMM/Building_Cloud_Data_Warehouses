@@ -1,0 +1,7 @@
+SELECT TOP (100) [start_hour]
+,[start_minute]
+,[start_second]
+,[end_hour]
+,[end_minute]
+,[end_second]
+ FROM [dbo].[dimensional_time_final]

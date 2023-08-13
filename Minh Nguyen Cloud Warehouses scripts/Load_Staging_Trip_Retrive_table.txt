@@ -1,0 +1,8 @@
+SELECT TOP (100) [trip_id]
+,[rideable_type]
+,[start_at]
+,[ended_at]
+,[start_station_id]
+,[end_station_id]
+,[rider_id]
+ FROM [dbo].[staging_trip]

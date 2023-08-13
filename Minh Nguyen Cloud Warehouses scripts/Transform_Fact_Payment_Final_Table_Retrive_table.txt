@@ -1,0 +1,5 @@
+SELECT TOP (100) [payment_id]
+,[amount]
+,TRY_CAST(date AS DATE) AS date
+,[rider_id]
+ FROM [dbo].[fact_payment_final]

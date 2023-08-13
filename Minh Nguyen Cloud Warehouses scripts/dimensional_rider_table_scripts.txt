@@ -1,0 +1,39 @@
+IF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseDelimitedTextFormat') 
+	CREATE EXTERNAL FILE FORMAT [SynapseDelimitedTextFormat] 
+	WITH ( FORMAT_TYPE = DELIMITEDTEXT ,
+	       FORMAT_OPTIONS (
+			 FIELD_TERMINATOR = ',',
+			 USE_TYPE_DEFAULT = FALSE
+			))
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'datalakeudacityproject_datalakeudacityproject_dfs_core_windows_net') 
+	CREATE EXTERNAL DATA SOURCE [datalakeudacityproject_datalakeudacityproject_dfs_core_windows_net] 
+	WITH (
+		LOCATION = 'abfss://datalakeudacityproject@datalakeudacityproject.dfs.core.windows.net' 
+	)
+GO
+
+IF OBJECT_ID('dbo.dimensional_rider') IS NOT NULL
+BEGIN
+    DROP EXTERNAL TABLE [dbo].[dimensional_rider];
+END
+
+CREATE EXTERNAL TABLE dbo.dimensional_rider
+WITH (
+    LOCATION = 'staging_rider',
+    DATA_SOURCE = [datalakeudacityproject_datalakeudacityproject_dfs_core_windows_net],
+    FILE_FORMAT = [SynapseDelimitedTextFormat]
+)
+AS
+SELECT
+    [rider_id], [first], [last], [address],
+	TRY_CAST(birthday AS DATE) AS birthday,
+	TRY_CAST(account_start_date AS DATE) AS account_start_date,
+	TRY_CAST(account_end_date AS DATE) AS account_end_date,
+	[is_member]
+FROM [dbo].[staging_rider];
+GO
+
+SELECT TOP 100 * FROM dbo.dimensional_rider
+GO
